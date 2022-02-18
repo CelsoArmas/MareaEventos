@@ -1,0 +1,107 @@
+{
+    "_version": "1.32.0",
+    "sap.app": {
+        "id": "com.tasa.mareaevento",
+        "type": "component",
+        "i18n": "i18n/i18n.properties",
+        "title": "{{appTitle}}",
+        "applicationVersion": {
+            "version": "0.0.1"
+        },
+        "embeddedBy": "../",
+        "description": "{{appDescription}}",
+        "crossNavigation": {
+            "inbounds": {
+                "fe-inbound": {
+                    "signature": {
+                        "parameters": {},
+                        "additionalParameters": "allowed"
+                    },
+                    "semanticObject": "mareaevento",
+                    "action": "display",
+                    "title": "Registro de Eventos de Pesca",
+                    "subTitle": "",
+                    "icon": "sap-icon://manager-insight"
+                }
+            }   
+        } 
+    },
+    "sap.ui": {
+        "technology": "UI5",
+        "icons": {
+            "icon": "",
+            "favIcon": "",
+            "phone": "",
+            "phone@2": "",
+            "tablet": "",
+            "tablet@2": ""
+        },
+        "deviceTypes": {
+            "desktop": true,
+            "tablet": true,
+            "phone": true
+        }
+    },
+    "sap.ui5": {
+        "flexEnabled": true,
+        "dependencies": {
+            "minUI5Version": "1.96.0",
+            "libs": {
+                "sap.ui.core": {}
+            }
+        },
+        "contentDensities": {
+            "compact": true,
+            "cozy": true
+        },
+        "models": {
+            "i18n": {
+                "type": "sap.ui.model.resource.ResourceModel",
+                "settings": {
+                    "bundleName": "com.tasa.mareaevento.i18n.i18n"
+                }
+            }
+        },
+        "resources": {
+            "css": [
+                {
+                    "uri": "css/style.css"
+                }
+            ]
+        },
+        "routing": {
+            "config": {
+                "routerClass": "sap.m.routing.Router",
+                "viewType": "XML",
+                "viewPath": "com.tasa.mareaevento.view",
+                "controlAggregation": "pages"
+            },
+            "routes": [
+                {
+                    "name": "RouteMarea",
+                    "pattern": "RouteMarea",
+                    "targetAggregation": "pages",
+                    "view": "Marea",
+                    "controlId": "Marea"
+                },
+                {
+                    "pattern": "RouteEvento",
+                    "name": "RouteEvento",
+                    "targetAggregation": "pages",
+                    "view": "Evento",
+                    "controlId": "Evento"
+                }
+            ]
+        },
+        "rootView": {
+            "viewName": "com.tasa.mareaevento.view.Marea",
+            "type": "XML",
+            "async": true,
+            "id": "Marea"
+        }
+    },
+    "sap.cloud": {
+        "public": true,
+        "service": "com-tasa-mareaevento"
+    }
+}

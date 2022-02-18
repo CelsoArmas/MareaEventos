@@ -1,0 +1,94 @@
+_schema-version: "3.2"
+ID: com-tasa-mareaevento
+description: A Fiori application.
+version: 0.0.1
+modules:
+- name: com-tasa-mareaevento-dest-content
+  type: com.sap.application.content
+  requires:
+  - name: com-tasa-mareaevento-dest-srv
+    parameters:
+      content-target: true
+  - name: com-tasa-mareaevento-repo-host
+    parameters:
+      service-key:
+        name: com-tasa-mareaevento-repo-host-key
+  - name: com-tasa-mareaevento-uaa
+    parameters:
+      service-key:
+        name: com-tasa-mareaevento-uaa-key
+  parameters:
+    content:
+      instance:
+        destinations:
+        - Name: com-tasa-mareaevento_repo_host
+          ServiceInstanceName: com-tasa-mareaevento-html5-srv
+          ServiceKeyName: com-tasa-mareaevento-repo-host-key
+          sap.cloud.service: com-tasa-mareaevento
+        - Authentication: OAuth2UserTokenExchange
+          Name: com-tasa-mareaevento_uaa
+          ServiceInstanceName: com-tasa-mareaevento-xsuaa-srv
+          ServiceKeyName: com-tasa-mareaevento-uaa-key
+          sap.cloud.service: com-tasa-mareaevento
+        existing_destinations_policy: ignore
+  build-parameters:
+    no-source: true
+- name: com-tasa-mareaevento-app-content
+  type: com.sap.application.content
+  path: .
+  requires:
+  - name: com-tasa-mareaevento-repo-host
+    parameters:
+      content-target: true
+  build-parameters:
+    build-result: resources
+    requires:
+    - artifacts:
+      - comtasamareaevento.zip
+      name: comtasamareaevento
+      target-path: resources/
+- name: comtasamareaevento
+  type: html5
+  path: .
+  build-parameters:
+    build-result: dist
+    builder: custom
+    commands:
+    - npm install
+    - npm run build:cf
+    supported-platforms: []
+resources:
+- name: com-tasa-mareaevento-dest-srv
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      HTML5Runtime_enabled: true
+      init_data:
+        instance:
+          destinations:
+          - Authentication: NoAuthentication
+            Name: ui5
+            ProxyType: Internet
+            Type: HTTP
+            URL: https://ui5.sap.com
+          existing_destinations_policy: update
+      version: 1.0.0
+    service: destination
+    service-name: com-tasa-mareaevento-dest-srv
+    service-plan: lite
+- name: com-tasa-mareaevento-uaa
+  type: org.cloudfoundry.managed-service
+  parameters:
+    path: ./xs-security.json
+    service: xsuaa
+    service-name: com-tasa-mareaevento-xsuaa-srv
+    service-plan: application
+- name: com-tasa-mareaevento-repo-host
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-name: com-tasa-mareaevento-html5-srv
+    service-plan: app-host
+parameters:
+  deploy_mode: html5-repo
+  enable-parallel-deployments: true
