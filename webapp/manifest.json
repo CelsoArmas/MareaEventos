@@ -82,6 +82,7 @@
                     "pattern": "RouteMarea",
                     "targetAggregation": "pages",
                     "view": "Marea",
+                    "viewId" :"marea",
                     "controlId": "Marea"
                 },
                 {
@@ -89,6 +90,7 @@
                     "name": "RouteEvento",
                     "targetAggregation": "pages",
                     "view": "Evento",
+                    "viewId" :"evento",
                     "controlId": "Evento"
                 }
             ]

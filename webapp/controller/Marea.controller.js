@@ -29,6 +29,9 @@ sap.ui.define([
         onInit: async function () {
             //pprincipe inicio
             BusyIndicator.show(0);
+            let params =  this.getOwnerComponent().getComponentData().startupParameters;
+            console.log(params);
+
             var that = this;
             var oModelDataModelo = that.getOwnerComponent()._getPropertiesToPropagate().oModels.DataModelo;
             var oListaModelo = that.getOwnerComponent()._getPropertiesToPropagate().oModels.ModeloListaMareas;
@@ -107,8 +110,10 @@ sap.ui.define([
                 var initData = oStore.get('InitData');
                 modelo.setData(initData);
                 modelo.refresh();
-                history.go(-1);
+                //history.go(-1);
                 this.actualizarMareas(false);
+                this.router.navTo("Main");
+                
             }else{
                 let that = this;
                 var mssg = this.oBundle.getText("CONFIRMSAVEMSSG");
@@ -120,8 +125,10 @@ sap.ui.define([
                             var initData = oStore.get('InitData');
                             modelo.setData(initData);
                             modelo.refresh();
-                            history.go(-1);
+                            //history.go(-1);
                             that.actualizarMareas(false);
+                            that.router.navTo("Main");
+                            
                         }
                     }
                 })
@@ -462,7 +469,7 @@ sap.ui.define([
                 listaEventos.pop();
             }
 
-            var validarMareaEventos = await sap.ui.controller("com.tasa.mareaevento.controller.Evento").validarMareaEventos(this);
+            var validarMareaEventos = await sap.ui.controller("com.tasa.registroeventospescav2.controller.DetalleEvento").validarMareaEventos(this);
             if (!validarMareaEventos) {
                 this.setVisibleBtnSave(false, false);
                 modelo.setProperty("/Config/readOnlyMotMarea", false);
@@ -478,9 +485,9 @@ sap.ui.define([
             mod.setProperty("/Utils/TipoConsulta", "E");
             let listaEventos = mod.getProperty("/Eventos/Lista");
             mod.setProperty("/Eventos/LeadSelEvento", listaEventos.length - 1);
-            await sap.ui.controller("com.tasa.mareaevento.controller.Evento").cargarEstrucuturas(this);
-            await sap.ui.controller("com.tasa.mareaevento.controller.Evento").cargarServiciosPreEvento(this);
-            let bol = await sap.ui.controller("com.tasa.mareaevento.controller.Evento").verificarCambiosDescarga_eve(listaEventos.length - 1, this);
+            await sap.ui.controller("com.tasa.registroeventospescav2.controller.DetalleEvento").cargarEstrucuturas(this);
+            await sap.ui.controller("com.tasa.registroeventospescav2.controller.DetalleEvento").cargarServiciosPreEvento(this);
+            let bol = await sap.ui.controller("com.tasa.registroeventospescav2.controller.DetalleEvento").verificarCambiosDescarga_eve(listaEventos.length - 1, this);
             //VALIDAR CON ERICK ESTE METODO POR QUE ES DE EVENTOCUST
             return bol;
         },
@@ -492,7 +499,7 @@ sap.ui.define([
 
         getNuevoEvento: function () {
             if (!this.oDialog) {
-                this.oDialog = sap.ui.xmlfragment("com.tasa.mareaevento.view.fragments.NuevoEvento", this);
+                this.oDialog = sap.ui.xmlfragment("com.tasa.registroeventospescav2.view.fragments.NuevoEvento", this);
                 this.getView().addDependent(this.oDialog);
             }
             return this.oDialog;
@@ -506,7 +513,7 @@ sap.ui.define([
             var oStore = jQuery.sap.storage(jQuery.sap.storage.Type.Session);
             oStore.put("FlagCargaInicial", false);
             var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
-            oRouter.navTo("RouteEvento");
+            oRouter.navTo("DetalleEvento");
             //mod.setProperty("/Utils/TipoEvento", null);
             //sap.ui.getCore().byId("ne_tipoEvn").setValue(null);
             mod.refresh();
@@ -917,12 +924,12 @@ sap.ui.define([
             modelo.setProperty("/Eventos/LeadSelEvento", indexEvento);
             modelo.setProperty("/Utils/DescTipoEvento", object.DESC_CDTEV);
             var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
-            oRouter.navTo("RouteEvento");
+            oRouter.navTo("DetalleEvento");
         },
 
         onSave: async function () {
             var modelo = this.getOwnerComponent().getModel("DetalleMarea");
-            var validarMareaEventos = sap.ui.controller("com.tasa.mareaevento.controller.Evento").validarMareaEventos(this);
+            var validarMareaEventos = sap.ui.controller("com.tasa.registroeventospescav2.controller.DetalleEvento").validarMareaEventos(this);
             var tieneErrores = modelo.getProperty("/Form/TERRORES");
             if (validarMareaEventos) {
                 if (!tieneErrores) {
@@ -955,7 +962,7 @@ sap.ui.define([
 
         getConfirmDialog: function () {
             if (!this.oDialogConfirm) {
-                this.oDialogConfirm = sap.ui.xmlfragment("com.tasa.mareaevento.view.fragments.ConfirmMarea", this);
+                this.oDialogConfirm = sap.ui.xmlfragment("com.tasa.registroeventospescav2.view.fragments.ConfirmMarea", this);
                 this.getView().addDependent(this.oDialogConfirm);
             }
             return this.oDialogConfirm;
@@ -1046,13 +1053,13 @@ sap.ui.define([
             this.verificarCierreMarea();
         },
 
-        verificarCierreMarea: function () {
+        verificarCierreMarea: async function () {
             var modelo = this.getOwnerComponent().getModel("DetalleMarea");
             var eventos = modelo.getProperty("/Eventos/Lista");
             var estadoMarea = modelo.getProperty("/Form/ESMAR");
             var ultimoEvento = eventos[eventos.length - 1];
-            var cantTotalDeclMarea = sap.ui.controller("com.tasa.mareaevento.controller.Evento").obtenerCantTotalPescaDecla(0, this);
-            var cantTotalDeclDescMarea = sap.ui.controller("com.tasa.mareaevento.controller.Evento").obtenerCantTotalPescaDeclDesc(0, this);
+            var cantTotalDeclMarea =  sap.ui.controller("com.tasa.registroeventospescav2.controller.DetalleEvento").obtenerCantTotalPescaDecla(0, this);
+            var cantTotalDeclDescMarea = await sap.ui.controller("com.tasa.registroeventospescav2.controller.DetalleEvento").obtenerCantTotalPescaDeclDescMarea(0, this);
             var motivoMarea = modelo.getProperty("/Form/CDMMA");
             var motivoMarPesca = ["1", "2"];
             var motivoCalaSDes = ["4", "5", "6"];
@@ -1135,7 +1142,8 @@ sap.ui.define([
                         if (evt == "Aceptar") {
                             BusyIndicator.hide();
                             await me.SaveReserva();
-                            me.getNuevaMareaDialog().close();
+                            me.getNuevaResVenDialog().close();
+                            //me.getNuevaMareaDialog().close();
                         }else{
                             BusyIndicator.hide();
                         }
@@ -1261,7 +1269,7 @@ sap.ui.define([
 
         getNuevaMareaDialog: function () {
             if (!this.oDialogNuevoSum) {
-                this.oDialogNuevoSum = sap.ui.xmlfragment("com.tasa.mareaevento.view.fragments.NuevoSuministro", this);
+                this.oDialogNuevoSum = sap.ui.xmlfragment("com.tasa.registroeventospescav2.view.fragments.NuevoSuministro", this);
                 this.getView().addDependent(this.oDialogNuevoSum);
             }
             return this.oDialogNuevoSum;
@@ -1312,7 +1320,7 @@ sap.ui.define([
 
         getReviewDialog: function () {
             if (!this.oDialogReview) {
-                this.oDialogReview = sap.ui.xmlfragment("com.tasa.mareaevento.view.fragments.ReviewReserva", this);
+                this.oDialogReview = sap.ui.xmlfragment("com.tasa.registroeventospescav2.view.fragments.ReviewReserva", this);
                 this.getView().addDependent(this.oDialogReview);
             }
             return this.oDialogReview;
@@ -1409,7 +1417,7 @@ sap.ui.define([
 
         getNuevaResVenDialog: function () {
             if (!this.oDialogNuevaResVent) {
-                this.oDialogNuevaResVent = sap.ui.xmlfragment("com.tasa.mareaevento.view.fragments.NuevaReservaVenta", this);
+                this.oDialogNuevaResVent = sap.ui.xmlfragment("com.tasa.registroeventospescav2.view.fragments.NuevaReservaVenta", this);
                 this.getView().addDependent(this.oDialogNuevaResVent);
             }
             return this.oDialogNuevaResVent;
@@ -1429,7 +1437,7 @@ sap.ui.define([
                 modelo.setProperty("/Utils/DescTipoEvento", "Zarpe");
                 oStore.put("FlagCargaInicial", false);
                 var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
-                oRouter.navTo("RouteEvento");
+                oRouter.navTo("DetalleEvento");
                 this.getNuevoEvento().close();
             }
         },
@@ -1518,6 +1526,7 @@ sap.ui.define([
             var modeloConst = this.getOwnerComponent().getModel("DetalleMarea");
             var usuario = await this.getCurrentUser();
             modeloConst.setProperty("/user/name", usuario);
+            modeloConst.setProperty("/Utils/searchArma", {});
 
             //let sIdInput = oEvent.getSource().getId(),
             let host = modeloConst.getProperty("/HelpHost"),
@@ -1527,10 +1536,10 @@ sap.ui.define([
                 nameComponent = "busqarmadores",
                 idComponent = "busqarmadores",
                 oInput = this.getView().byId("idArmadorComercial_R");
-            modeloConst.setProperty("/input", oInput);
+            modeloConst.setProperty("/input", null);//modeloConst.setProperty("/input", oInput);
 
             if (!this.DialogComponent) {
-                this.DialogComponent = sap.ui.xmlfragment("com.tasa.mareaevento.view.fragments.NuevoArmador", this);
+                this.DialogComponent = sap.ui.xmlfragment("com.tasa.registroeventospescav2.view.fragments.NuevoArmador", this);
                 oView.addDependent(this.DialogComponent);
             }
             modeloConst.setProperty("/idDialogComp", this.DialogComponent.getId());
@@ -1585,7 +1594,7 @@ sap.ui.define([
 
         getConfirmSaveDialogTest: function () {
             if (!this.oDialogConfirmSave) {
-                this.oDialogConfirmSave = sap.ui.xmlfragment("com.tasa.mareaevento.view.fragments.EventoFinalizado", this);
+                this.oDialogConfirmSave = sap.ui.xmlfragment("com.tasa.registroeventospescav2.view.fragments.EventoFinalizado", this);
                 this.getView().addDependent(this.oDialogConfirmSave);
             }
             return this.oDialogConfirmSave;
@@ -1606,17 +1615,6 @@ sap.ui.define([
                 oButton.setIcon(this.buttonIconFormatter("DM"));
                 oButton.setText(this.highestSeverityMessages("DM"));
             }.bind(this), 100);
-        },
-
-        onReabrirMarea: async function () {
-            var modelo = this.getOwnerComponent().getModel("DetalleMarea");
-            var nrmar = modelo.getProperty("/Form/NRMAR");
-            var usuario = this.getCurrentUser();
-            var reabrirMarea = await TasaBackendService.reabrirMarea(nrmar, usuario);
-            if (reabrirMarea) {
-                var mssg = this.oBundle.getText("MAREAREABIERTA", [nrmar]);
-                MessageBox.success(mssg);
-            }
         }
 
     });

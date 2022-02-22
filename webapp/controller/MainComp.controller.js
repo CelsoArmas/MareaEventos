@@ -56,6 +56,12 @@ sap.ui.define([
                 }
                 return usuario;
             },
+
+            getCurrentCorreo :async function(){
+                const oUserInfo = await this.getUserInfoService();
+                const sUserEmail = oUserInfo.getEmail(); //fgarcia@tasa.com.pe
+                return sUserEmail;
+            },
     
             getUserInfoService: function() {
                 return new Promise(resolve => sap.ui.require([
@@ -313,9 +319,20 @@ sap.ui.define([
                 modelo.refresh();
     
                 var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
-                //oRouter.navTo("Main");
+                oRouter.navTo("Main");
     
                 BusyIndicator.hide();
+                /*var viewName = view.split(".")[4];
+                if (viewName == "DetalleMarea") {
+                    this.getConfirmSaveDialog().close();
+                    history.go(-1);//navegar a comp. reut. Lista Mareas
+                } else {
+                    this.getConfirmSaveDialog().close();
+                    history.go(-2);//navegar a comp. reut. Lista Mareas
+                }*/
+                //console.log(evt.getSource().getParent().getParent().getProperty("viewName"));
+                /*this.getConfirmSaveDialog().close();
+                history.go(-1);*/
             },
     
             onNavVerMarea: async function (evt) {
@@ -799,7 +816,7 @@ sap.ui.define([
     
                 });
     
-                if (listaHoroAveCorreo > 0) {
+                if (listaHoroAveCorreo.length > 0) {
                     //llama al servicio de envio de correo
                     let serv_correoHoroAve = TasaBackendService.envioCorreoHoroAve(Cabecera.NMEMB, listaHoroAveCorreo);
                     let that = this;
@@ -1429,6 +1446,20 @@ sap.ui.define([
                         };
                         messageItems.push(objMessage);
                     }
+                    let tablaMensajes = anular.t_mensaje ? anular.t_mensaje : [];
+                    if(tablaMensajes.length > 0){
+                        if(tablaMensajes[0].CMIN == "S"){
+                            let mssg = tablaMensajes[0].DSMIN;
+                            MessageBox.success(mssg, {
+                                title: "Exito",
+                                onClose: async function () {
+                                    BusyIndicator.hide();
+                                    await me.obtenerVentas(true);
+                                }
+                            });
+                        }
+                    }
+                    
                     /*
                     var oButton = this.getView().byId("messagePopoverBtn");
                     oMessagePopover.getBinding("items").attachChange(function (oEvent) {
@@ -1446,8 +1477,8 @@ sap.ui.define([
                         oButton.setText(this.highestSeverityMessages("DM"));
                     }.bind(this), 100);*/
     
-                    BusyIndicator.hide();
-                    await me.obtenerVentas(true);
+                    // BusyIndicator.hide();
+                    // await me.obtenerVentas(true);
                 } else {
                     BusyIndicator.hide();
                 }
@@ -1620,7 +1651,7 @@ sap.ui.define([
                 var dataModelo = modelo.getData();
                 var oStore = jQuery.sap.storage(jQuery.sap.storage.Type.Session);
                 oStore.put("DataModelo", dataModelo);
-                oStore.put("AppOrigin", "mareaevento");
+                oStore.put("AppOrigin", "registroeventospescav2");
                 var oCrossAppNav = sap.ushell.Container.getService("CrossApplicationNavigation");
                 oCrossAppNav.toExternal({
                     target: {
@@ -2042,7 +2073,7 @@ sap.ui.define([
                                         modelo.setData(initData);
                                         modelo.refresh();
                                         await me.abrirDetalleMarea(nrmarAnt);
-                                        //oRouter.navTo("DetalleMarea");
+                                        oRouter.navTo("DetalleMarea");
                                         //await me.cargarMarea(nrmarAnt, "A", null, true);
                                         BusyIndicator.hide();
                                     }
@@ -2158,6 +2189,8 @@ sap.ui.define([
                     modelo.setProperty("/DistribFlota/Indicador", caracterNuevo);
                     modelo.setProperty("/DistribFlota/IntLatPuerto", parseInt(response.LTGEO));
                     modelo.setProperty("/DistribFlota/IntLonPuerto", parseInt(response.LNGEO));
+                    modelo.refresh();
+                    console.log("DISTRIBUCION FLOTA PLANTA: ", modelo.getProperty("/DistribFlota"));
                     if (!response.DSEMP || !response.INPRP) {
                         var mssg = this.getResourceBundle().getText("PLANTASINEMPRESA");
                         MessageBox.error(mssg);
@@ -2190,6 +2223,7 @@ sap.ui.define([
                         }
                     }
                     modelo.setProperty("/DistribFlota/Indicador", caracterEditar);
+                    modelo.setProperty("/DistribFlota/CDEMP", response.EMPLA ? response.EMPLA : "");
                     modelo.setProperty("/DistribFlota/IntLatPuerto", parseInt(response.LTGEO));
                     modelo.setProperty("/DistribFlota/IntLonPuerto", parseInt(response.LNGEO));
                     if (!response.DSEMP || !response.INPRP) {
@@ -2915,22 +2949,14 @@ sap.ui.define([
                 var oStore = jQuery.sap.storage(jQuery.sap.storage.Type.Session);
                 var prepareEditRecord = await this.prepareEditRecord(marea);
                 var modelo = this.getOwnerComponent().getModel("DetalleMarea");
-                var modeloListaMareas = this.getOwnerComponent().getModel("ListaMareas");
-                var modeloPlantas = this.getOwnerComponent().getModel("PlantasModel");
-                var constantsUtility = this.getOwnerComponent().getModel("ConstantsUtility");
                 if(prepareEditRecord){
                     modelo.setProperty("/DataSession/Type", "EDIT");
                     modelo.refresh();
                     var dataBckpModelo = modelo.getData();
                     oStore.put("DataModeloBckp", dataBckpModelo);
-                    this.getOwnerComponent().setModel(modelo, "DataModelo");
-                    this.getOwnerComponent().setModel(modeloListaMareas, "ModeloListaMareas");
-                    this.getOwnerComponent().setModel(modeloPlantas, "ModeloPlantasModel");
-                    this.getOwnerComponent().setModel(constantsUtility, "ModeloConstants");
                     BusyIndicator.hide();
                     var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
-                    //oRouter.navTo("DetalleMarea");
-                    oRouter.navTo("DetalleEventoExt");
+                    oRouter.navTo("DetalleMarea");
                 }
             },
     
@@ -3372,28 +3398,38 @@ sap.ui.define([
                 let cantPropios = Number(0);
                 let cantTerceros = Number(0);
                 let cantPdclTotal = Number(0);
+                let cantEmbaPescaProp = Number(0);
+                let cantEmbaPescaTerceros = Number(0);
     
                 if (dataPropios.length > 0) {
                     for (let index = 0; index < dataPropios.length; index++) {
                         const element = dataPropios[index];
-                        cantPropios += Number(element.CNPCM) ? Number(element.CNPCM) : 0;
+                        let cantidad = Number(element.CNPCM) ? Number(element.CNPCM) : 0;
+                        cantPropios += cantidad;
+                        if(cantidad > 0){
+                            cantEmbaPescaProp++;
+                        }
                     }
                 }
                 if (dataTerceros.length > 0) {
                     for (let index = 0; index < dataTerceros.length; index++) {
                         const element = dataTerceros[index];
-                        cantTerceros += Number(element.CNPCM) ? Number(element.CNPCM) : 0;
+                        let cantidad = Number(element.CNPCM) ? Number(element.CNPCM) : 0;
+                        cantTerceros += cantidad;
+                        if(cantidad > 0){
+                            cantEmbaPescaTerceros++;
+                        }
                     }
                 }
                 cantPdclTotal = cantPropios + cantTerceros;
-    
-    
     
                 modeloMareas.setProperty("/Utils/TotalPescDecl", cantPdclTotal);
                 modeloMareas.setProperty("/Utils/CantEmbProp", dataPropios.length);
                 modeloMareas.setProperty("/Utils/CantEmbTerc", dataTerceros.length);
                 modeloMareas.setProperty("/Utils/PescaDclPropio", cantPropios);
                 modeloMareas.setProperty("/Utils/PescaDclTercero", cantTerceros);
+                modeloMareas.setProperty("/Utils/PescaEmbaPropios", cantEmbaPescaProp);
+                modeloMareas.setProperty("/Utils/PescaEmbaTerceros", cantEmbaPescaTerceros);
             }
 
 
